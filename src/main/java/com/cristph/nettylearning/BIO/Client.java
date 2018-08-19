@@ -12,7 +12,6 @@ public class Client {
     public Client(String host, int port) {
         try {
             socket = new Socket(host, port);
-            System.out.println("client socket start");
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         } catch (IOException e) {
@@ -22,7 +21,8 @@ public class Client {
 
     public void send(String msg) {
         try {
-            writer.write(msg);
+            writer.write(msg + System.lineSeparator());
+            writer.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -31,12 +31,19 @@ public class Client {
     public String receive() {
         String tmp = "";
         try {
-            tmp = reader.readLine();
+            while (reader.ready()) {
+                tmp = reader.readLine();
+                return tmp;
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             return tmp;
         }
+    }
+
+    public boolean isAlive() {
+        return !socket.isClosed();
     }
 
     public void stop() {

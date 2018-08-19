@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+
 public class TestBIOModel {
 
     private static String host;
@@ -19,20 +20,50 @@ public class TestBIOModel {
     }
 
     @Test
-    public void testBIOModel() {
-        Server server = new Server(port);
-        ExecutorService executor = Executors.newFixedThreadPool(100);
-        for (int i = 0; i < 100; i++) {
-            executor.submit(new ClientThread(new Client(host, port)));
-        }
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            executor.shutdownNow();
-        }));
+    public void TestServerAndClient() {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        executor.submit(() -> {
+            testServer();
+        });
+
         try {
-            TimeUnit.MINUTES.sleep(2);
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        executor.submit(() -> {
+            testClient(10);
+        });
+
+        try {
+            TimeUnit.SECONDS.sleep(30);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         System.exit(0);
     }
+
+
+    private void testServer() {
+        ExecutorService server = Executors.newSingleThreadExecutor();
+        server.submit(new ServerThread(port));
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            server.shutdownNow();
+        }));
+    }
+
+    private void testClient(int clientCount) {
+        ExecutorService clientPool = Executors.newFixedThreadPool(clientCount);
+        for (int i = 0; i < clientCount; i++) {
+            clientPool.submit(new ClientThread(host, port));
+        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            clientPool.shutdownNow();
+        }));
+    }
+
 }

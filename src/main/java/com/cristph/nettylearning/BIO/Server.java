@@ -16,14 +16,22 @@ public class Server {
         try {
             serverSocket = new ServerSocket();
             serverSocket.bind(new InetSocketAddress(port));
-            System.out.println("server start");
-            while (!Thread.currentThread().isInterrupted()) {
-                Socket socket = serverSocket.accept();
-                System.out.println("server accept a socket");
-                executor.submit(new ServerConnectionHandler(socket));
-            }
+            System.out.println("server start at port [" + port + "]");
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void startService() {
+        while (!Thread.currentThread().isInterrupted()) {
+            Socket socket = null;
+            try {
+                socket = serverSocket.accept();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            System.out.println("server accept a socket at [" + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + "]");
+            executor.submit(new ServerConnectionHandler(socket));
         }
     }
 
